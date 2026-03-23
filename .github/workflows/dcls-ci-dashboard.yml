@@ -161,5 +161,8 @@ jobs:
             echo "No data changes to commit"
           else
             git commit -m "Update dcls-ci dashboard data [skip ci]"
-            git push origin gh-pages-dcls-ci
+            # Use HEAD:gh-pages-dcls-ci so this works regardless of local branch name.
+            # On first run (branch didn't exist), local branch is 'master' after a
+            # failed actions/checkout; HEAD:ref pushes current HEAD to the remote name.
+            git push origin HEAD:gh-pages-dcls-ci
           fi

@@ -18,6 +18,7 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Optional
 
 from parser import parse_job_name
 
@@ -45,7 +46,7 @@ def gh_api(endpoint: str, repo: str) -> dict:
     return json.loads(result.stdout)
 
 
-def gh_api_list(endpoint: str, repo: str, per_page: int = 100) -> dict | None:
+def gh_api_list(endpoint: str, repo: str, per_page: int = 100) -> Optional[dict]:
     """Call GitHub API with per_page parameter.
 
     Returns None on 404 (workflow not found) so callers can skip gracefully.
