@@ -3,25 +3,37 @@
 # ================================================================================
 #
 # PURPOSE:
-#   PR gate / smoke gate — fast multi-category test for cv32a60x target.
+#   PR gate / smoke gate — fast multi-category test for rv32 target configs.
 #   Target: ≤ 15 min wall-clock (jobs run in parallel).
+#
+# SUPPORTED CONFIGS (ADR-003):
+#   cv32a60x — rv32imc + Zba/Zbb, no MMU (primary, 47/47 ISA PASS locally)
+#   cv32a65x — rv32imc variant 65x, no MMU (upstream ci.yml green config)
+#
+# NOTE ON cv64 (see ADR-003):
+#   reference/docs/06-dcls-adaptation.md recommends cv64a6_imafdc_sv39 as V1
+#   config for generic DCLS projects. DCLS Rigoletto is rv32 (embedded safety);
+#   cv64 support deferred to V1-015+ pending DUT linker verification.
 #
 # TRIGGER (V1 / DCLS-V1-014):
 #   - workflow_dispatch: manual trigger (initial validation)
 #   - push to task/dcls-ci-tier1: dev branch auto-trigger during debugging
 #   NOTE: PR trigger (on: pull_request) added in DCLS-V1-016 (W15)
 #
-# MATRIX (5 jobs, all cv32a60x):
-#   1. smoke-tests-dcls       — hello_world + return0 via cva6.py (RTL+ISS)
-#   2. dv-riscv-arch-test     — rv32im-add-01  (RV32I base integer)
-#   3. dv-riscv-arch-test-rvc — rv32im-cadd-01 (RVC compressed instructions)
-#   4. dv-riscv-arch-test-rvm — rv32im-mul-01  (RV32M multiply)
-#   5. dv-riscv-tests-p       — rv32ui-p-add   (riscv-tests physical mode)
+# MATRIX (8 jobs, parallel):
+#   cv32a60x × smoke-tests-dcls        (hello_world + return0)
+#   cv32a60x × dv-riscv-arch-test      (rv32im-add-01,  RV32I base)
+#   cv32a60x × dv-riscv-arch-test-rvc  (rv32im-cadd-01, RVC compressed)
+#   cv32a60x × dv-riscv-arch-test-rvm  (rv32im-mul-01,  RV32M multiply)
+#   cv32a60x × dv-riscv-tests-p        (rv32ui-p-add,   physical mode)
+#   cv32a65x × smoke-tests-dcls        (hello_world + return0)
+#   cv32a65x × dv-riscv-arch-test      (rv32im-cadd-01, first in testlist)
+#   cv32a65x × dv-riscv-tests-p        (rv32ui-p-add,   physical mode)
 #
 # REFERENCE:
-#   - DCLS adaptation guide:  10_ci/reference/docs/06-dcls-adaptation.md
-#   - Template:               10_ci/reference/templates/workflows/tier1-pr-gate.yml
-#   - Task:                   5_Tasks/repo/DCLS_v1_2026_Feb/DCLS-V1-014_github_actions_tier1_ci.md
+#   - ADR-003:  3_Knowledge/Decisions/ADR-003_target_config_selection.md
+#   - Template: 10_ci/reference/templates/workflows/tier1-pr-gate.yml
+#   - Task:     5_Tasks/repo/DCLS_v1_2026_Feb/DCLS-V1-014_github_actions_tier1_ci.md
 # ================================================================================
 
 name: dcls-ci-tier1
@@ -56,10 +68,11 @@ jobs:
           install-tools: "true"
 
   # ─────────────────────────────────────────────────────────────────────────────
-  # Job 2: Execute test matrix (5 jobs in parallel, all cv32a60x)
+  # Job 2: Execute test matrix (8 jobs in parallel, cv32a60x + cv32a65x)
+  # Job naming follows dashboard convention: testcase (config)
   # ─────────────────────────────────────────────────────────────────────────────
   execute-tests-tier1:
-    name: ${{ matrix.config }} / ${{ matrix.testcase }}
+    name: ${{ matrix.testcase }} (${{ matrix.config }})
     runs-on: ubuntu-latest
     needs: setup-tools
     strategy:
@@ -68,9 +81,11 @@ jobs:
         include:
 
           # ══════════════════════════════════════════════════════════════════
-          # 1. Smoke test: hello_world + return0 via regression script
-          #    Verifies: basic RTL compilation + ISS tandem execution pipeline
+          # CONFIG: cv32a60x — rv32imc+Zba/Zbb, no MMU
+          # Primary config: 47/47 ISA PASS validated locally (ADR-003)
           # ══════════════════════════════════════════════════════════════════
+
+          # 1. Smoke test: hello_world + return0 via DCLS wrapper (cv32a60x)
           - config: cv32a60x
             testcase: smoke-tests-dcls
             mode: script
@@ -80,10 +95,7 @@ jobs:
             test_name: ""
             linker: ""
 
-          # ══════════════════════════════════════════════════════════════════
-          # 2. RISC-V Architecture Test — RV32I base integer (ADD)
-          #    Verifies: basic arithmetic + tandem ISS comparison
-          # ══════════════════════════════════════════════════════════════════
+          # 2. RISC-V Architecture Test — RV32I base integer ADD (cv32a60x)
           - config: cv32a60x
             testcase: dv-riscv-arch-test
             mode: testlist
@@ -93,10 +105,7 @@ jobs:
             test_name: "rv32im-add-01"
             linker: "../tests/riscv-arch-test/riscv-target/spike/link.ld"
 
-          # ══════════════════════════════════════════════════════════════════
-          # 3. RISC-V Architecture Test — RVC compressed instructions (CADD)
-          #    Verifies: C extension decode + execution
-          # ══════════════════════════════════════════════════════════════════
+          # 3. RISC-V Architecture Test — RVC compressed ADD (cv32a60x)
           - config: cv32a60x
             testcase: dv-riscv-arch-test-rvc
             mode: testlist
@@ -106,10 +115,7 @@ jobs:
             test_name: "rv32im-cadd-01"
             linker: "../tests/riscv-arch-test/riscv-target/spike/link.ld"
 
-          # ══════════════════════════════════════════════════════════════════
-          # 4. RISC-V Architecture Test — RV32M multiply (MUL)
-          #    Verifies: M extension multiply unit
-          # ══════════════════════════════════════════════════════════════════
+          # 4. RISC-V Architecture Test — RV32M multiply (cv32a60x)
           - config: cv32a60x
             testcase: dv-riscv-arch-test-rvm
             mode: testlist
@@ -119,16 +125,50 @@ jobs:
             test_name: "rv32im-mul-01"
             linker: "../tests/riscv-arch-test/riscv-target/spike/link.ld"
 
-          # ══════════════════════════════════════════════════════════════════
-          # 5. RISC-V ISA Tests (physical mode) — rv32ui-p-add
-          #    Verifies: riscv-tests infrastructure + RV32UI physical mode
-          # ══════════════════════════════════════════════════════════════════
+          # 5. RISC-V ISA Tests (physical mode) — rv32ui-p-add (cv32a60x)
           - config: cv32a60x
             testcase: dv-riscv-tests-p
             mode: testlist
             simulator: veri-testharness,spike
             install_script: install-riscv-tests
             testlist: "../tests/testlist_riscv-tests-cv32a60x-p.yaml"
+            test_name: "rv32ui-p-add"
+            linker: ""
+
+          # ══════════════════════════════════════════════════════════════════
+          # CONFIG: cv32a65x — rv32imc variant 65x, no MMU
+          # Upstream ci.yml green config; in reference KNOWN_CONFIGS (ADR-003)
+          # ══════════════════════════════════════════════════════════════════
+
+          # 6. Smoke test: hello_world + return0 via DCLS wrapper (cv32a65x)
+          - config: cv32a65x
+            testcase: smoke-tests-dcls
+            mode: script
+            simulator: veri-testharness,spike
+            install_script: ""
+            testlist: ""
+            test_name: ""
+            linker: ""
+
+          # 7. RISC-V Architecture Test — RVC compressed ADD (cv32a65x)
+          #    Note: same testcase name as cv32a60x — different config, same suite
+          - config: cv32a65x
+            testcase: dv-riscv-arch-test
+            mode: testlist
+            simulator: veri-testharness,spike
+            install_script: install-riscv-arch-test
+            testlist: "../tests/testlist_riscv-arch-test-cv32a65x.yaml"
+            test_name: "rv32im-cadd-01"
+            linker: "../tests/riscv-arch-test/riscv-target/spike/link.ld"
+
+          # 8. RISC-V ISA Tests (physical mode) — rv32ui-p-add (cv32a65x)
+          #    Note: no v-mode testlist for cv32a65x in this repo
+          - config: cv32a65x
+            testcase: dv-riscv-tests-p
+            mode: testlist
+            simulator: veri-testharness,spike
+            install_script: install-riscv-tests
+            testlist: "../tests/testlist_riscv-tests-cv32a65x-p.yaml"
             test_name: "rv32ui-p-add"
             linker: ""
 
@@ -145,7 +185,7 @@ jobs:
       - name: Install prerequisites
         run: source ci/install-prereq.sh
 
-      - name: Run Tier 1 — ${{ matrix.config }} / ${{ matrix.testcase }}
+      - name: Run Tier 1 — ${{ matrix.testcase }} (${{ matrix.config }})
         run: |
           set -x
           mkdir -p ci-results
@@ -159,6 +199,9 @@ jobs:
 
           if [ "${{ matrix.mode }}" = "script" ]; then
             # Mode: script — run a regression shell script directly
+            # Pass config via DV_TARGET so smoke-tests-dcls.sh can parametrize
+            export DV_TARGET=${{ matrix.config }}
+            export DV_SIMULATORS=${{ matrix.simulator }}
             source verif/regress/${{ matrix.testcase }}.sh || rc=$?
 
           elif [ "${{ matrix.mode }}" = "testlist" ]; then
