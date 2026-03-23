@@ -41,6 +41,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
+  actions: read      # Read workflow runs via GitHub API (gh api /actions/workflows/...)
   contents: write    # Push to gh-pages-dcls-ci branch
   pages: write       # Deploy to GitHub Pages
   id-token: write    # OIDC token for Pages deployment
