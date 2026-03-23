@@ -62,6 +62,9 @@ jobs:
     name: Setup Tools
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Setup CVA6 Environment
         uses: ./.github/actions/setup-cva6-env
         with:
