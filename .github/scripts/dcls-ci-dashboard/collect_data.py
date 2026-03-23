@@ -45,8 +45,12 @@ def gh_api(endpoint: str, repo: str) -> dict:
     return json.loads(result.stdout)
 
 
-def gh_api_list(endpoint: str, repo: str, per_page: int = 100) -> dict:
-    """Call GitHub API with per_page parameter."""
+def gh_api_list(endpoint: str, repo: str, per_page: int = 100) -> dict | None:
+    """Call GitHub API with per_page parameter.
+
+    Returns None on 404 (workflow not found) so callers can skip gracefully.
+    Exits on other errors.
+    """
     url = f"/repos/{repo}/actions/{endpoint}"
     sep = "&" if "?" in url else "?"
     result = subprocess.run(
@@ -55,17 +59,26 @@ def gh_api_list(endpoint: str, repo: str, per_page: int = 100) -> dict:
         text=True,
     )
     if result.returncode != 0:
+        # 404 = workflow file doesn't exist yet; skip gracefully
+        if "Not Found (HTTP 404)" in result.stderr or "HTTP 404" in result.stderr:
+            print(f"  WARNING: workflow not found (404), skipping: {url}", file=sys.stderr)
+            return None
         print(f"ERROR: gh api {url} failed: {result.stderr}", file=sys.stderr)
         sys.exit(1)
     return json.loads(result.stdout)
 
 
 def fetch_runs(repo: str, workflow_file: str, count: int) -> list:
-    """Fetch the latest `count` completed workflow runs."""
+    """Fetch the latest `count` completed workflow runs.
+
+    Returns empty list if workflow doesn't exist yet (404).
+    """
     data = gh_api_list(
         f"workflows/{workflow_file}/runs?status=completed&per_page={count}",
         repo,
     )
+    if data is None:
+        return []
     runs = data.get("workflow_runs", [])
     return runs[:count]
 
