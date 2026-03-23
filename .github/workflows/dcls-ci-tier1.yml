@@ -1,0 +1,197 @@
+# ================================================================================
+# DCLS CVA6 CI — Tier 1 PR Gate Workflow
+# ================================================================================
+#
+# PURPOSE:
+#   PR gate / smoke gate — fast multi-category test for cv32a60x target.
+#   Target: ≤ 15 min wall-clock (jobs run in parallel).
+#
+# TRIGGER (V1 / DCLS-V1-014):
+#   - workflow_dispatch: manual trigger (initial validation)
+#   - push to task/dcls-ci-tier1: dev branch auto-trigger during debugging
+#   NOTE: PR trigger (on: pull_request) added in DCLS-V1-016 (W15)
+#
+# MATRIX (5 jobs, all cv32a60x):
+#   1. smoke-tests-dcls       — hello_world + return0 via cva6.py (RTL+ISS)
+#   2. dv-riscv-arch-test     — rv32im-add-01  (RV32I base integer)
+#   3. dv-riscv-arch-test-rvc — rv32im-cadd-01 (RVC compressed instructions)
+#   4. dv-riscv-arch-test-rvm — rv32im-mul-01  (RV32M multiply)
+#   5. dv-riscv-tests-p       — rv32ui-p-add   (riscv-tests physical mode)
+#
+# REFERENCE:
+#   - DCLS adaptation guide:  10_ci/reference/docs/06-dcls-adaptation.md
+#   - Template:               10_ci/reference/templates/workflows/tier1-pr-gate.yml
+#   - Task:                   5_Tasks/repo/DCLS_v1_2026_Feb/DCLS-V1-014_github_actions_tier1_ci.md
+# ================================================================================
+
+name: dcls-ci-tier1
+
+on:
+  workflow_dispatch:          # Manual trigger — primary trigger for V1
+  push:
+    branches:
+      - task/dcls-ci-tier1   # Dev branch: auto-trigger for debugging
+
+concurrency:
+  group: dcls-ci-tier1-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SPIKE_TANDEM: 1             # Enable Spike ISS tandem checking (RTL vs ISS comparison)
+  NUM_JOBS: 8                 # Parallel make jobs
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Job 1: Build and cache tools (Verilator, Spike, RISC-V toolchain)
+  # Runs once; test jobs restore from cache without rebuilding.
+  # ─────────────────────────────────────────────────────────────────────────────
+  setup-tools:
+    name: Setup Tools
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup CVA6 Environment
+        uses: ./.github/actions/setup-cva6-env
+        with:
+          install-tools: "true"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Job 2: Execute test matrix (5 jobs in parallel, all cv32a60x)
+  # ─────────────────────────────────────────────────────────────────────────────
+  execute-tests-tier1:
+    name: ${{ matrix.config }} / ${{ matrix.testcase }}
+    runs-on: ubuntu-latest
+    needs: setup-tools
+    strategy:
+      fail-fast: false        # Always false: see ALL failures, not just the first
+      matrix:
+        include:
+
+          # ══════════════════════════════════════════════════════════════════
+          # 1. Smoke test: hello_world + return0 via regression script
+          #    Verifies: basic RTL compilation + ISS tandem execution pipeline
+          # ══════════════════════════════════════════════════════════════════
+          - config: cv32a60x
+            testcase: smoke-tests-dcls
+            mode: script
+            simulator: veri-testharness,spike
+            install_script: ""
+            testlist: ""
+            test_name: ""
+            linker: ""
+
+          # ══════════════════════════════════════════════════════════════════
+          # 2. RISC-V Architecture Test — RV32I base integer (ADD)
+          #    Verifies: basic arithmetic + tandem ISS comparison
+          # ══════════════════════════════════════════════════════════════════
+          - config: cv32a60x
+            testcase: dv-riscv-arch-test
+            mode: testlist
+            simulator: veri-testharness,spike
+            install_script: install-riscv-arch-test
+            testlist: "../tests/testlist_riscv-arch-test-cv32a60x.yaml"
+            test_name: "rv32im-add-01"
+            linker: "../tests/riscv-arch-test/riscv-target/spike/link.ld"
+
+          # ══════════════════════════════════════════════════════════════════
+          # 3. RISC-V Architecture Test — RVC compressed instructions (CADD)
+          #    Verifies: C extension decode + execution
+          # ══════════════════════════════════════════════════════════════════
+          - config: cv32a60x
+            testcase: dv-riscv-arch-test-rvc
+            mode: testlist
+            simulator: veri-testharness,spike
+            install_script: install-riscv-arch-test
+            testlist: "../tests/testlist_riscv-arch-test-cv32a60x.yaml"
+            test_name: "rv32im-cadd-01"
+            linker: "../tests/riscv-arch-test/riscv-target/spike/link.ld"
+
+          # ══════════════════════════════════════════════════════════════════
+          # 4. RISC-V Architecture Test — RV32M multiply (MUL)
+          #    Verifies: M extension multiply unit
+          # ══════════════════════════════════════════════════════════════════
+          - config: cv32a60x
+            testcase: dv-riscv-arch-test-rvm
+            mode: testlist
+            simulator: veri-testharness,spike
+            install_script: install-riscv-arch-test
+            testlist: "../tests/testlist_riscv-arch-test-cv32a60x.yaml"
+            test_name: "rv32im-mul-01"
+            linker: "../tests/riscv-arch-test/riscv-target/spike/link.ld"
+
+          # ══════════════════════════════════════════════════════════════════
+          # 5. RISC-V ISA Tests (physical mode) — rv32ui-p-add
+          #    Verifies: riscv-tests infrastructure + RV32UI physical mode
+          # ══════════════════════════════════════════════════════════════════
+          - config: cv32a60x
+            testcase: dv-riscv-tests-p
+            mode: testlist
+            simulator: veri-testharness,spike
+            install_script: install-riscv-tests
+            testlist: "../tests/testlist_riscv-tests-cv32a60x-p.yaml"
+            test_name: "rv32ui-p-add"
+            linker: ""
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      # Restore cached tools (no rebuild — setup-tools already did it)
+      - name: Setup CVA6 Environment
+        uses: ./.github/actions/setup-cva6-env
+        # No install-tools: "true" here — just restores cache + sets env
+
+      - name: Install prerequisites
+        run: source ci/install-prereq.sh
+
+      - name: Run Tier 1 — ${{ matrix.config }} / ${{ matrix.testcase }}
+        run: |
+          set -x
+          mkdir -p ci-results
+          echo "1" > ci-results/exit_code
+          source verif/sim/setup-env.sh
+          rc=0
+
+          CC_OPTS="-static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles \
+            -g ../tests/custom/common/syscalls.c ../tests/custom/common/crt.S \
+            -I../tests/custom/env -I../tests/custom/common -lgcc"
+
+          if [ "${{ matrix.mode }}" = "script" ]; then
+            # Mode: script — run a regression shell script directly
+            source verif/regress/${{ matrix.testcase }}.sh || rc=$?
+
+          elif [ "${{ matrix.mode }}" = "testlist" ]; then
+            # Mode: testlist — run cva6.py with a testlist + single-test filter
+            if [[ "${{ matrix.simulator }}" == *"veri-testharness"* ]]; then
+              source verif/regress/install-verilator.sh
+            fi
+            source verif/regress/install-spike.sh
+            if [ -n "${{ matrix.install_script }}" ]; then
+              source verif/regress/${{ matrix.install_script }}.sh
+            fi
+            LINKER_OPT=""
+            [ -n "${{ matrix.linker }}" ] && LINKER_OPT="--linker=${{ matrix.linker }}"
+            TEST_OPT=""
+            [ -n "${{ matrix.test_name }}" ] && TEST_OPT="--test ${{ matrix.test_name }}"
+            cd verif/sim
+            python3 cva6.py \
+              --testlist=${{ matrix.testlist }} \
+              --target ${{ matrix.config }} \
+              --iss_yaml=cva6.yaml \
+              --iss=${{ matrix.simulator }} \
+              --issrun_opts="+tb_performance_mode+debug_disable=1+UVM_VERBOSITY=UVM_NONE" \
+              $LINKER_OPT $TEST_OPT || rc=$?
+            cd -
+          fi
+
+          echo "$rc" > ci-results/exit_code
+          exit $rc
+
+      - name: Upload CI results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tier1-results-${{ matrix.config }}-${{ matrix.testcase }}
+          path: ci-results/
+          retention-days: 7
