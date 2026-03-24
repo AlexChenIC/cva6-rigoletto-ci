@@ -8,7 +8,7 @@ a self-contained static HTML file.
 Workflows displayed:
   ci              — ci.yml (Legacy)
   dcls-ci-tier1   — DCLS Tier 1 (PR Gate)
-  dcls-ci-tier2   — DCLS Tier 2 (Full Coverage, future)
+  dcls-ci-tier2   — DCLS Tier 2 (Daily Verilator, future)
 """
 
 import argparse
@@ -23,7 +23,7 @@ from jinja2 import Environment, FileSystemLoader
 WORKFLOW_INFO = [
     {"key": "ci",            "display_name": "ci.yml (Legacy)",        "file": "runs_ci.json"},
     {"key": "dcls-ci-tier1", "display_name": "Tier 1 (PR Gate)",       "file": "runs_dcls-ci-tier1.json"},
-    {"key": "dcls-ci-tier2", "display_name": "Tier 2 (Full Coverage)", "file": "runs_dcls-ci-tier2.json"},
+    {"key": "dcls-ci-tier2", "display_name": "Tier 2 (Daily Verilator)", "file": "runs_dcls-ci-tier2.json"},
 ]
 
 # Preferred display order for configs in the matrix.
@@ -302,6 +302,14 @@ def main():
     output_file = output_dir / "index.html"
     with open(output_file, "w") as f:
         f.write(html)
+
+    # Copy static assets (logo, etc.) alongside the HTML
+    import shutil
+    static_dir = Path(__file__).parent / "static"
+    if static_dir.exists():
+        for asset in static_dir.iterdir():
+            if asset.is_file():
+                shutil.copy(asset, output_dir / asset.name)
 
     print(f"Dashboard generated: {output_file}")
     print(f"  Workflows: {len(workflows)}")

@@ -110,6 +110,7 @@ jobs:
     name: Deploy to Pages
     needs: build
     runs-on: ubuntu-latest
+    continue-on-error: true   # Don't block data persistence if Pages isn't enabled yet
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

@@ -48,6 +48,13 @@
     .matrix-icon:hover { opacity: 0.8; }
     a.matrix-icon:hover { text-decoration: none; }
 
+    /* Config name column: use blue instead of Bootstrap default pink */
+    .matrix-config-cell code {
+      color: #0d6efd;
+      background-color: transparent;
+      padding: 0;
+    }
+
     /* Workflow selector */
     .wf-selector .btn { font-size: 0.82rem; padding: 0.3rem 0.9rem; }
     .wf-selector .btn-check:checked + .btn-outline-primary {
@@ -75,6 +82,7 @@
 <nav class="navbar navbar-expand-lg top-navbar shadow-sm">
   <div class="container-fluid">
     <span class="navbar-brand">
+      <img src="openhw_logo.png" alt="OpenHW" height="28" class="me-2" style="vertical-align:middle">
       DCLS CVA6 CI Dashboard
       <span class="badge bg-primary ms-2" style="font-size:0.7rem; font-weight:600; vertical-align:middle">Tier 1 + Legacy</span>
     </span>
@@ -158,7 +166,7 @@
         {% elif wf.key == 'dcls-ci-tier1' %}
           {{ wf.display_name }} <span class="badge bg-primary ms-1" style="font-size:0.65rem">PR GATE</span>
         {% elif wf.key == 'dcls-ci-tier2' %}
-          {{ wf.display_name }} <span class="badge bg-success ms-1" style="font-size:0.65rem">FULL</span>
+          {{ wf.display_name }} <span class="badge bg-success ms-1" style="font-size:0.65rem">DAILY</span>
         {% else %}
           {{ wf.display_name }}
         {% endif %}
@@ -376,7 +384,7 @@ function renderMatrix(wfKey) {
   let bodyHtml = '';
   activeConfigs.forEach(cfg => {
     bodyHtml += '<tr>';
-    bodyHtml += '<td class="text-nowrap fw-medium" style="font-size:0.78rem; padding:6px 8px; vertical-align:middle"><code>' + cfg + '</code></td>';
+    bodyHtml += '<td class="text-nowrap fw-medium matrix-config-cell" style="font-size:0.78rem; padding:6px 8px; vertical-align:middle"><code>' + cfg + '</code></td>';
     activeSuites.forEach(suite => {
       const cell = matrixData[cfg] && matrixData[cfg][suite] && matrixData[cfg][suite][wfKey];
       if (cell) {

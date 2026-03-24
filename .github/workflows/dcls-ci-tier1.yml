@@ -20,15 +20,16 @@
 #   - push to task/dcls-ci-tier1: dev branch auto-trigger during debugging
 #   NOTE: PR trigger (on: pull_request) added in DCLS-V1-016 (W15)
 #
-# MATRIX (8 jobs, parallel):
-#   cv32a60x × smoke-tests-dcls        (hello_world + return0)
-#   cv32a60x × dv-riscv-arch-test      (rv32im-add-01,  RV32I base)
-#   cv32a60x × dv-riscv-arch-test-rvc  (rv32im-cadd-01, RVC compressed)
-#   cv32a60x × dv-riscv-arch-test-rvm  (rv32im-mul-01,  RV32M multiply)
-#   cv32a60x × dv-riscv-tests-p        (rv32ui-p-add,   physical mode)
-#   cv32a65x × smoke-tests-dcls        (hello_world + return0)
-#   cv32a65x × dv-riscv-arch-test      (rv32im-cadd-01, first in testlist)
-#   cv32a65x × dv-riscv-tests-p        (rv32ui-p-add,   physical mode)
+# MATRIX (9 jobs, parallel):
+#   cv32a60x × smoke-tests-dcls      (hello_world + return0)
+#   cv32a60x × dv-riscv-arch-test    (full testlist: ~147 tests, I+C+M+Zba/Zbb)
+#   cv32a60x × dv-riscv-tests-p      (full testlist: ~65 ISA tests, physical mode)
+#   cv32a60x × dv-riscv-compliance   (RISC-V compliance suite, rv32i/m/c)
+#   cv32a60x × dv-riscv-csr-access   (M-mode CSR read/write/mcycle tests)
+#   cv32a65x × smoke-tests-dcls      (hello_world + return0)
+#   cv32a65x × dv-riscv-arch-test    (full testlist: ~147 tests, I+C+M+Zba/Zbb)
+#   cv32a65x × dv-riscv-tests-p      (full testlist: ~65 ISA tests, physical mode)
+#   cv32a60x × dcls-custom-tests     (DCLS-specific: ALU/mem/CSR/lockstep/exception)
 #
 # REFERENCE:
 #   - ADR-003:  3_Knowledge/Decisions/ADR-003_target_config_selection.md
@@ -71,7 +72,7 @@ jobs:
           install-tools: "true"
 
   # ─────────────────────────────────────────────────────────────────────────────
-  # Job 2: Execute test matrix (8 jobs in parallel, cv32a60x + cv32a65x)
+  # Job 2: Execute test matrix (9 jobs in parallel, cv32a60x + cv32a65x)
   # Job naming follows dashboard convention: testcase (config)
   # ─────────────────────────────────────────────────────────────────────────────
   execute-tests-tier1:
@@ -98,44 +99,45 @@ jobs:
             test_name: ""
             linker: ""
 
-          # 2. RISC-V Architecture Test — RV32I base integer ADD (cv32a60x)
+          # 2. RISC-V Architecture Test — full suite ~147 tests: I+C+M+Zba/Zbb (cv32a60x)
           - config: cv32a60x
             testcase: dv-riscv-arch-test
             mode: testlist
             simulator: veri-testharness,spike
             install_script: install-riscv-arch-test
             testlist: "../tests/testlist_riscv-arch-test-cv32a60x.yaml"
-            test_name: "rv32im-add-01"
+            test_name: ""
             linker: "../tests/riscv-arch-test/riscv-target/spike/link.ld"
 
-          # 3. RISC-V Architecture Test — RVC compressed ADD (cv32a60x)
-          - config: cv32a60x
-            testcase: dv-riscv-arch-test-rvc
-            mode: testlist
-            simulator: veri-testharness,spike
-            install_script: install-riscv-arch-test
-            testlist: "../tests/testlist_riscv-arch-test-cv32a60x.yaml"
-            test_name: "rv32im-cadd-01"
-            linker: "../tests/riscv-arch-test/riscv-target/spike/link.ld"
-
-          # 4. RISC-V Architecture Test — RV32M multiply (cv32a60x)
-          - config: cv32a60x
-            testcase: dv-riscv-arch-test-rvm
-            mode: testlist
-            simulator: veri-testharness,spike
-            install_script: install-riscv-arch-test
-            testlist: "../tests/testlist_riscv-arch-test-cv32a60x.yaml"
-            test_name: "rv32im-mul-01"
-            linker: "../tests/riscv-arch-test/riscv-target/spike/link.ld"
-
-          # 5. RISC-V ISA Tests (physical mode) — rv32ui-p-add (cv32a60x)
+          # 3. RISC-V ISA Tests (physical mode) — full suite ~65 ISA tests (cv32a60x)
           - config: cv32a60x
             testcase: dv-riscv-tests-p
             mode: testlist
             simulator: veri-testharness,spike
             install_script: install-riscv-tests
             testlist: "../tests/testlist_riscv-tests-cv32a60x-p.yaml"
-            test_name: "rv32ui-p-add"
+            test_name: ""
+            linker: ""
+
+          # 4. RISC-V Compliance — rv32i/m/c compliance suite (cv32a60x)
+          - config: cv32a60x
+            testcase: dv-riscv-compliance
+            mode: testlist
+            simulator: veri-testharness,spike
+            install_script: install-riscv-compliance
+            testlist: "../tests/testlist_riscv-compliance-cv32a60x.yaml"
+            test_name: ""
+            linker: ""
+
+          # 5. RISC-V CSR Access — M-mode CSR read/write/mcycle tests (cv32a60x)
+          #    install-riscv-arch-test provides headers needed by CSR ASM tests
+          - config: cv32a60x
+            testcase: dv-riscv-csr-access
+            mode: testlist
+            simulator: veri-testharness,spike
+            install_script: install-riscv-arch-test
+            testlist: "../tests/testlist_riscv-csr-access-test-cv32a60x.yaml"
+            test_name: ""
             linker: ""
 
           # ══════════════════════════════════════════════════════════════════
@@ -153,18 +155,17 @@ jobs:
             test_name: ""
             linker: ""
 
-          # 7. RISC-V Architecture Test — RVC compressed ADD (cv32a65x)
-          #    Note: same testcase name as cv32a60x — different config, same suite
+          # 7. RISC-V Architecture Test — full suite ~147 tests: I+C+M+Zba/Zbb (cv32a65x)
           - config: cv32a65x
             testcase: dv-riscv-arch-test
             mode: testlist
             simulator: veri-testharness,spike
             install_script: install-riscv-arch-test
             testlist: "../tests/testlist_riscv-arch-test-cv32a65x.yaml"
-            test_name: "rv32im-cadd-01"
+            test_name: ""
             linker: "../tests/riscv-arch-test/riscv-target/spike/link.ld"
 
-          # 8. RISC-V ISA Tests (physical mode) — rv32ui-p-add (cv32a65x)
+          # 8. RISC-V ISA Tests (physical mode) — full suite (cv32a65x)
           #    Note: no v-mode testlist for cv32a65x in this repo
           - config: cv32a65x
             testcase: dv-riscv-tests-p
@@ -172,7 +173,23 @@ jobs:
             simulator: veri-testharness,spike
             install_script: install-riscv-tests
             testlist: "../tests/testlist_riscv-tests-cv32a65x-p.yaml"
-            test_name: "rv32ui-p-add"
+            test_name: ""
+            linker: ""
+
+          # ══════════════════════════════════════════════════════════════════
+          # DCLS CUSTOM TESTS — UniBo hmr_unit / dmr_checker targeted coverage
+          # Tests cover: ALU paths, D-cache 4 ports, CSR in DMR mode,
+          #              lockstep stress, exception handling
+          # ══════════════════════════════════════════════════════════════════
+
+          # 9. DCLS custom tests — ALU/mem/CSR/lockstep/exception (cv32a60x)
+          - config: cv32a60x
+            testcase: dcls-custom-tests
+            mode: script
+            simulator: veri-testharness,spike
+            install_script: ""
+            testlist: ""
+            test_name: ""
             linker: ""
 
     steps:
