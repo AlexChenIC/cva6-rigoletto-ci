@@ -1,5 +1,126 @@
 [
   {
+    "id": 23487287762,
+    "source": "github-actions",
+    "simulator": "verilator",
+    "run_number": 4,
+    "status": "completed",
+    "conclusion": "failure",
+    "html_url": "https://github.com/AlexChenIC/cva6-rigoletto-ci/actions/runs/23487287762",
+    "head_branch": "rigoletto",
+    "head_sha": "41905232",
+    "event": "workflow_dispatch",
+    "created_at": "2026-03-24T11:33:00Z",
+    "updated_at": "2026-03-24T12:36:13Z",
+    "run_started_at": "2026-03-24T11:33:00Z",
+    "duration_seconds": 3793,
+    "total_jobs": 9,
+    "passed_jobs": 8,
+    "failed_jobs": 1,
+    "skipped_jobs": 0,
+    "jobs": [
+      {
+        "name": "dv-riscv-csr-access (cv32a60x)",
+        "conclusion": "failure",
+        "started_at": "2026-03-24T11:56:15Z",
+        "completed_at": "2026-03-24T11:57:35Z",
+        "duration_seconds": 80,
+        "html_url": "https://github.com/AlexChenIC/cva6-rigoletto-ci/actions/runs/23487287762/job/68346509103",
+        "arch": "rv32",
+        "config": "cv32a60x",
+        "testcase": "dv-riscv-csr-access"
+      },
+      {
+        "name": "dv-riscv-tests-p (cv32a60x)",
+        "conclusion": "success",
+        "started_at": "2026-03-24T11:41:37Z",
+        "completed_at": "2026-03-24T11:43:45Z",
+        "duration_seconds": 128,
+        "html_url": "https://github.com/AlexChenIC/cva6-rigoletto-ci/actions/runs/23487287762/job/68346509104",
+        "arch": "rv32",
+        "config": "cv32a60x",
+        "testcase": "dv-riscv-tests-p"
+      },
+      {
+        "name": "dv-riscv-arch-test (cv32a65x)",
+        "conclusion": "success",
+        "started_at": "2026-03-24T12:12:25Z",
+        "completed_at": "2026-03-24T12:35:15Z",
+        "duration_seconds": 1370,
+        "html_url": "https://github.com/AlexChenIC/cva6-rigoletto-ci/actions/runs/23487287762/job/68346509118",
+        "arch": "rv32",
+        "config": "cv32a65x",
+        "testcase": "dv-riscv-arch-test"
+      },
+      {
+        "name": "smoke-tests-dcls (cv32a65x)",
+        "conclusion": "success",
+        "started_at": "2026-03-24T11:47:02Z",
+        "completed_at": "2026-03-24T11:50:33Z",
+        "duration_seconds": 211,
+        "html_url": "https://github.com/AlexChenIC/cva6-rigoletto-ci/actions/runs/23487287762/job/68346509125",
+        "arch": "rv32",
+        "config": "cv32a65x",
+        "testcase": "smoke-tests-dcls"
+      },
+      {
+        "name": "dv-riscv-tests-p (cv32a65x)",
+        "conclusion": "success",
+        "started_at": "2026-03-24T12:24:31Z",
+        "completed_at": "2026-03-24T12:36:05Z",
+        "duration_seconds": 694,
+        "html_url": "https://github.com/AlexChenIC/cva6-rigoletto-ci/actions/runs/23487287762/job/68346509133",
+        "arch": "rv32",
+        "config": "cv32a65x",
+        "testcase": "dv-riscv-tests-p"
+      },
+      {
+        "name": "dv-riscv-compliance (cv32a60x)",
+        "conclusion": "success",
+        "started_at": "2026-03-24T12:05:44Z",
+        "completed_at": "2026-03-24T12:08:43Z",
+        "duration_seconds": 179,
+        "html_url": "https://github.com/AlexChenIC/cva6-rigoletto-ci/actions/runs/23487287762/job/68346509136",
+        "arch": "rv32",
+        "config": "cv32a60x",
+        "testcase": "dv-riscv-compliance"
+      },
+      {
+        "name": "dv-riscv-arch-test (cv32a60x)",
+        "conclusion": "success",
+        "started_at": "2026-03-24T12:11:56Z",
+        "completed_at": "2026-03-24T12:15:22Z",
+        "duration_seconds": 206,
+        "html_url": "https://github.com/AlexChenIC/cva6-rigoletto-ci/actions/runs/23487287762/job/68346509139",
+        "arch": "rv32",
+        "config": "cv32a60x",
+        "testcase": "dv-riscv-arch-test"
+      },
+      {
+        "name": "smoke-tests-dcls (cv32a60x)",
+        "conclusion": "success",
+        "started_at": "2026-03-24T11:55:24Z",
+        "completed_at": "2026-03-24T11:59:10Z",
+        "duration_seconds": 226,
+        "html_url": "https://github.com/AlexChenIC/cva6-rigoletto-ci/actions/runs/23487287762/job/68346509144",
+        "arch": "rv32",
+        "config": "cv32a60x",
+        "testcase": "smoke-tests-dcls"
+      },
+      {
+        "name": "dcls-custom-tests (cv32a60x)",
+        "conclusion": "success",
+        "started_at": "2026-03-24T12:29:07Z",
+        "completed_at": "2026-03-24T12:36:12Z",
+        "duration_seconds": 425,
+        "html_url": "https://github.com/AlexChenIC/cva6-rigoletto-ci/actions/runs/23487287762/job/68346509147",
+        "arch": "rv32",
+        "config": "cv32a60x",
+        "testcase": "dcls-custom-tests"
+      }
+    ]
+  },
+  {
     "id": 23474055115,
     "source": "github-actions",
     "simulator": "verilator",
