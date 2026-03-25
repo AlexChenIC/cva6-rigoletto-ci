@@ -20,12 +20,11 @@
 #   - push to task/dcls-ci-tier1: dev branch auto-trigger during debugging
 #   NOTE: PR trigger (on: pull_request) added in DCLS-V1-016 (W15)
 #
-# MATRIX (9 jobs, parallel):
+# MATRIX (8 jobs, parallel):
 #   cv32a60x × smoke-tests-dcls      (hello_world + return0)
-#   cv32a60x × dv-riscv-arch-test    (full testlist: ~147 tests, I+C+M+Zba/Zbb)
-#   cv32a60x × dv-riscv-tests-p      (full testlist: ~65 ISA tests, physical mode)
-#   cv32a60x × dv-riscv-compliance   (RISC-V compliance suite, rv32i/m/c)
-#   cv32a60x × dv-riscv-csr-access   (M-mode CSR read/write/mcycle tests)
+#   cv32a60x × dv-riscv-arch-test    (representative: rv32im-add-01, I+M extension)
+#   cv32a60x × dv-riscv-tests-p      (representative: rv32ui-p-add, U-mode physical)
+#   cv32a60x × dv-riscv-compliance   (representative: rv32im-MUL, M-extension)
 #   cv32a65x × smoke-tests-dcls      (hello_world + return0)
 #   cv32a65x × dv-riscv-arch-test    (full testlist: ~147 tests, I+C+M+Zba/Zbb)
 #   cv32a65x × dv-riscv-tests-p      (full testlist: ~65 ISA tests, physical mode)
@@ -72,7 +71,7 @@ jobs:
           install-tools: "true"
 
   # ─────────────────────────────────────────────────────────────────────────────
-  # Job 2: Execute test matrix (9 jobs in parallel, cv32a60x + cv32a65x)
+  # Job 2: Execute test matrix (8 jobs in parallel, cv32a60x + cv32a65x)
   # Job naming follows dashboard convention: testcase (config)
   # ─────────────────────────────────────────────────────────────────────────────
   execute-tests-tier1:
